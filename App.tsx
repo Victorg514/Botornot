@@ -155,8 +155,8 @@ function App() {
           `Optimized! Score: ${result.score} | W_py: ${weights.weightPython.toFixed(4)} | W_h: ${weights.weightHeuristic.toFixed(4)} | Thresh: ${weights.threshold.toFixed(4)}`
         );
 
-        // Save golden weights for future runs without ground truth
-        localStorage.setItem('goldenWeights', JSON.stringify(weights));
+        // Save weights for future runs without ground truth
+        localStorage.setItem('weights', JSON.stringify(weights));
 
         // Auto-download weights.json so user can put it in public/
         const blob = new Blob([JSON.stringify(weights, null, 2)], { type: 'application/json' });
@@ -169,7 +169,7 @@ function App() {
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
       } else {
-        // No ground truth → load saved golden weights from file or localStorage
+        // No ground truth → load saved weights from file or localStorage
         try {
           const res = await fetch('/weights.json');
           if (res.ok) {
@@ -181,7 +181,7 @@ function App() {
           }
         } catch {
           // Fallback to localStorage
-          const saved = localStorage.getItem('goldenWeights');
+          const saved = localStorage.getItem('weights');
           if (saved) {
             try {
               weights = JSON.parse(saved) as EnsembleWeights;

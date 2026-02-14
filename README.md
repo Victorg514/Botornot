@@ -74,7 +74,7 @@ After scanning, you can toggle between heuristic only and ensemble to see which 
 2. Start the app: `npm run dev`
 3. Upload `practice_data/merged_dataset.json`
 4. Upload `practice_data/merged_bots.txt` as ground truth
-5. Click **Run Scan** — optimizes golden weights across both datasets
+5. Click **Run Scan** — optimizes weights across both datasets
 6. Move the downloaded `weights.json` into `public/`
 
 ## During final hour of competition (and for future datasets)

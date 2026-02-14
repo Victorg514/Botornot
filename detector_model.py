@@ -21,7 +21,7 @@ TRAIN_BOT_FILES  = ['practice_data/dataset.bots.30.txt', 'practice_data/dataset.
 TEST_JSON_FILE   = 'practice_data/dataset.posts&users.34.json'
 TEST_BOT_FILE    = None
 
-# Cross-validation (For training golden weights)
+# Cross-validation (For training weights)
 # Trains on each dataset, predicts the other, merges scores for ALL practice users.
 # Also merges datasets + ground truths for the React app to optimize across both.
 CROSS_VALIDATE = False  
@@ -218,7 +218,7 @@ def main():
     if CROSS_VALIDATE:
         # ---- CROSS-VALIDATION MODE ----
         # Train on 32 → predict 30, then train on 30 → predict 32
-        # Merge all python scores + datasets for golden weight optimization
+        # Merge all python scores + datasets for weight optimization
         print("=== CROSS-VALIDATION MODE ===\n")
 
         print("--- Fold 1: Train on 32, Predict 30 ---")
@@ -254,7 +254,7 @@ def main():
             score = (4 * tp) - (1 * fn) - (2 * fp)
             print(f"{label}: TP={tp} FP={fp} FN={fn} Score={score}")
 
-        # Merge datasets + ground truths for React app golden weight optimization
+        # Merge datasets + ground truths for React app weight optimization
         merge_datasets(
             ['practice_data/dataset.posts&users.30.json', 'practice_data/dataset.posts&users.32.json'],
             ['practice_data/dataset.bots.30.txt', 'practice_data/dataset.bots.32.txt'],
