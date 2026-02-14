@@ -1,0 +1,6 @@
+
+bot_or_not_challenge.pdf
+*.txt
+!package*.json
+*.csv
+botornot/
