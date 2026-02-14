@@ -18,13 +18,13 @@ from datetime import datetime
 # OPTION B: Train on 30 AND 32, Test on final (For the Final Submission)
 TRAIN_JSON_FILES = ['practice_data/dataset.posts&users.30.json', 'practice_data/dataset.posts&users.32.json']
 TRAIN_BOT_FILES  = ['practice_data/dataset.bots.30.txt', 'practice_data/dataset.bots.32.txt']
-TEST_JSON_FILE   = 'practice_data/final_evaluation_dataset.json'
+TEST_JSON_FILE   = 'practice_data/dataset.posts&users.34.json'
 TEST_BOT_FILE    = None
 
 # Cross-validation (For training golden weights)
 # Trains on each dataset, predicts the other, merges scores for ALL practice users.
 # Also merges datasets + ground truths for the React app to optimize across both.
-CROSS_VALIDATE = True  
+CROSS_VALIDATE = False  
 
 # THRESHOLD: How confident must the model be to flag a bot? (0.0 to 1.0)
 # Higher = Fewer False Positives (Safer, avoids -2 penalty)

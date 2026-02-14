@@ -25,7 +25,7 @@ Below, use the **Inspect** button on any user to see a detailed feature breakdow
 
 ![Example](image.png)
 
-The **Final Score** is a weighted blend of the heuristic score and the Python RF probability: `HybridScore = (W_heuristic × heuristicScore) + (W_python × pythonProbability)`. The hill-climbing optimizer finds the best `W_heuristic`, `W_python`, and `threshold` to maximize the competition score. If Python RF can't be trained or isn't chosen by the user, the heuristic score alone will be the final score **Confidence** is the final score divided by 0.9 and rounded, capped at 99%.
+The **Final Score** is a weighted blend of the heuristic score and the Python RF probability: `HybridScore = (W_heuristic × heuristicScore) + (W_python × pythonProbability)`. The hill-climbing optimizer finds the best `W_heuristic`, `W_python`, and `threshold` to maximize the competition score. If Python RF can't be trained or isn't chosen by the user, the heuristic score alone will be the final score **Confidence** is the final score divided by 0.9 and rounded, capped at 99%. It displays how confident the model is that a user is a bot.
 
 ## Competition Scoring
 
