@@ -344,7 +344,7 @@ function App() {
            />
         </div>
 
-        {/* ... (Rest of the component remains exactly the same) ... */}
+        
         
         {/* Action & Metrics Area */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -395,11 +395,12 @@ function App() {
              )}
            </div>
 
-           {/* Score Breakdown */}
-           <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-lg">
-             <h3 className="font-semibold text-lg mb-6">Accuracy Metrics</h3>
+    {/* Score Breakdown */}
+           <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-lg flex flex-col">
+             <h3 className="font-semibold text-lg mb-6">Results & Export</h3>
+             
              {metrics ? (
-               <div className="space-y-4">
+               <div className="space-y-4 mb-auto">
                  <div className="flex justify-between items-center p-3 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
                    <span className="text-emerald-400 font-medium">True Positives (+4)</span>
                    <span className="text-xl font-bold text-white">{metrics.truePositives}</span>
@@ -418,37 +419,47 @@ function App() {
                       <span className="text-3xl font-bold text-white">{metrics.score}</span>
                     </div>
                  </div>
-                 {analysisResults.size > 0 && (
-                   <div className="mt-6 pt-4 border-t border-slate-700 space-y-2">
-                     <button
-                       onClick={() => {
-                         const teamName = prompt('Enter your team name:', 'YourTeam');
-                         if (teamName) {
-                           exportBotDetections(analysisResults, teamName);
-                         }
-                       }}
-                       className="w-full bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
-                     >
-                       <Download size={16} />
-                       Export Submission File
-                     </button>
-                     <button
-                       onClick={() => {
-                         calculateStats(analysisResults, groundTruth);
-                         exportDetailedReport(analysisResults, groundTruth, dataset?.id.toString() || 'dataset');
-                       }}
-                       className="w-full bg-slate-700 hover:bg-slate-600 text-slate-300 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
-                     >
-                       <FileJson size={16} />
-                       Export Analysis Report
-                     </button>
-                   </div>
-                 )}
                </div>
              ) : (
-               <div className="h-full flex flex-col items-center justify-center text-center text-slate-500 space-y-2">
-                 <Upload size={32} className="opacity-50" />
-                 <p>Upload Ground Truth (.txt) file and run a scan to see metrics.</p>
+                // State when NO Ground Truth is present
+                analysisResults.size > 0 ? (
+                  <div className="mb-auto p-4 bg-slate-900/50 rounded-lg text-center border border-slate-700 border-dashed">
+                    <p className="text-slate-400 font-medium">No Ground Truth Uploaded</p>
+                    <p className="text-slate-500 text-sm mt-1">Accuracy scores are unavailable, but you can still export your predictions below.</p>
+                  </div>
+                ) : (
+                  <div className="h-full flex flex-col items-center justify-center text-center text-slate-500 space-y-2 py-8">
+                    <Upload size={32} className="opacity-50" />
+                    <p>Upload Ground Truth (.txt) file or Run Scan to see actions.</p>
+                  </div>
+                )
+             )}
+
+             {/* Export Buttons - Always visible if analysis is done */}
+             {analysisResults.size > 0 && (
+               <div className="mt-6 pt-4 border-t border-slate-700 space-y-2">
+                 <button
+                   onClick={() => {
+                     const teamName = prompt('Enter your team name:', 'YourTeam');
+                     if (teamName) {
+                       exportBotDetections(analysisResults, teamName);
+                     }
+                   }}
+                   className="w-full bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                 >
+                   <Download size={16} />
+                   Export Submission File
+                 </button>
+                 <button
+                   onClick={() => {
+                     calculateStats(analysisResults, groundTruth);
+                     exportDetailedReport(analysisResults, groundTruth, dataset?.id.toString() || 'dataset');
+                   }}
+                   className="w-full bg-slate-700 hover:bg-slate-600 text-slate-300 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                 >
+                   <FileJson size={16} />
+                   Export Analysis Report
+                 </button>
                </div>
              )}
            </div>
