@@ -1,21 +1,14 @@
 # BotOrNot Analyzer
 
-Bot detection tool for the Bot or Not Challenge at McHacks. Uses a hybrid ensemble that combines hand-crafted heuristic features with a Python Random Forest ML model, with weights optimized via hill-climbing.
+Bot detection tool for the Bot or Not Challenge at McHacks. Uses a hybrid ensemble that combines hand-crafted heuristic features with a Random Forest ML model (running entirely in the browser), with weights optimized via hill-climbing.
 
-## Setup
+## Live App
 
-```bash
-cd botornot
-npm install
-npm run dev
-```
+[https://botornot-steel.vercel.app/](https://botornot-steel.vercel.app/)
 
-Open `http://localhost:5173` in your browser.
+## Usage
 
-
-## Usage 
-
-1. Start the app: `npm run dev`
+1. Open the app
 2. Upload a dataset JSON file (e.g. `practice_data/dataset.posts&users.30.json`)
 3. Click **Run Scan** 
 4. If ground truth file is available, upload it and review accuracy metrics
@@ -57,48 +50,35 @@ Accounts with a final score ≥ 0.459 are flagged as bots. We optimized feature 
 The final detection combines two models:
 
 1. **Heuristic model** — 7 hand-crafted features (temporal regularity, hour entropy, hashtag density, etc.) with weights optimized via hill-climbing
-2. **Random Forest ML model** — trained on practice data using `detector_model.py`, outputs per-user bot probabilities
+2. **Random Forest ML model** — pre-trained on practice data, exported as JSON (`public/rf_model.json`), and run directly in the browser via `rfModel.ts`. No Python needed at runtime.
 
-When you click "Run Scan", with access to ground truth files, the app runs a 500k-iteration hill-climbing optimizer to find the best `W_python`, `W_heuristic`, and `threshold` that maximize the competition score. The heuristic-only baseline scores 523 across practice datasets; the ensemble aims to improve on this by combining both signals. Optimized weights for all three values are then created and can be used to evaluate future datasets. 
+When you click "Run Scan", the app loads the RF model, computes per-user bot probabilities in-browser, and if ground truth is available, runs a 500k-iteration hill-climbing optimizer to find the best `W_python`, `W_heuristic`, and `threshold` that maximize the competition score. The heuristic-only baseline scores 523 across practice datasets; the ensemble aims to improve on this by combining both signals. Optimized weights for all three values are then created and can be used to evaluate future datasets.
 
 ## Heuristic Only Option
 
 After scanning, you can toggle between heuristic only and ensemble to see which detected more bots and to give a safety net if a new dataset (without ground truth files) doesn't react to the weights well. 
 
-## Training (Before Competition)
+## Training the RF Model (One-Time)
 
-1. Set `CROSS_VALIDATE = True` in `detector_model.py` and run `python detector_model.py`
-   - Cross-validates: train on 32→predict 30, train on 30→predict 32
-   - Outputs `public/python_scores.json` with scores for ALL practice users
-   - Outputs `practice_data/merged_dataset.json` and `practice_data/merged_bots.txt`
-2. Start the app: `npm run dev`
-3. Upload `practice_data/merged_dataset.json`
-4. Upload `practice_data/merged_bots.txt` as ground truth
-5. Click **Run Scan** — optimizes weights across both datasets
-6. Move the downloaded `weights.json` into `public/`
+The RF model is pre-trained in Python and exported as `public/rf_model.json` for browser inference. To retrain:
 
-## During final hour of competition (and for future datasets)
+1. Run `python detector_model.py` with Option B (train on datasets 30+32)
+2. This exports `public/rf_model.json` (0.9 MB, 200 trees, max_depth=15)
+3. The JSON file ships with the app — no Python needed at runtime
 
-1. Set `CROSS_VALIDATE = False` and uncomment **Option B** in `detector_model.py`
-2. Place the new dataset at the path specified by `TEST_JSON_FILE`
-3. Run `python detector_model.py` — trains on both practice datasets, predicts on the new one → `public/python_scores.json`
-4. Start the app, upload the new dataset, click **Run Scan**
-   - Auto-loads `python_scores.json` (scores match this dataset's users)
-   - Auto-loads `weights.json` (generalized from cross-validation training)
-   - Runs the hybrid ensemble → export submission file
+## Using the App
+
+1. Upload a dataset JSON, click **Run Scan**
+   - The RF model runs in-browser (loaded from `rf_model.json`)
+   - If ground truth is available, the optimizer finds the best ensemble weights and downloads `weights.json` — move it to `public/` for future use
+   - If no ground truth, loads saved `weights.json` from `public/` automatically
+2. Toggle between **Ensemble** and **Heuristic Only** to compare results
+3. Export the submission file
  
 
 ## Tech Stack
 
 - React 19 + TypeScript + Vite
 - Tailwind CSS (CDN)
-- Python (scikit-learn Random Forest)
+- Random Forest (pre-trained in Python/scikit-learn, inference runs in-browser)
 
-## Key Files
-
-- `features.ts` - Heuristic scoring, ensemble blending, and hill-climbing optimizer
-- `detector_model.py` - Python RF model, outputs `public/python_scores.json`
-- `App.tsx` - Dashboard UI, auto-loads python scores, runs optimizer on scan
-- `exportResults.ts` - Submission file export
-- `types.ts` - TypeScript interfaces
-- `components/` - StatsCard and UserDetailModal

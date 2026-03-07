@@ -152,7 +152,7 @@ def run_single(train_json, train_bots, test_json, test_bots, features):
     X_train_df = extract_features(df_raw_train)
     y_train = X_train_df['author_id'].apply(lambda x: 1 if x in train_bot_ids else 0)
 
-    clf = RandomForestClassifier(n_estimators=500, class_weight='balanced', random_state=42)
+    clf = RandomForestClassifier(n_estimators=200, max_depth=15, class_weight='balanced', random_state=42)
     clf.fit(X_train_df[features], y_train)
 
     df_raw_test, test_bot_ids = load_data(test_json, test_bots)
@@ -205,6 +205,37 @@ def merge_datasets(json_paths, bot_paths, output_json, output_bots):
         for bot_id in sorted(merged_bots):
             f.write(f"{bot_id}\n")
     print(f"[DONE] Merged ground truth → {output_bots} ({len(merged_bots)} bots)")
+
+
+def export_model_json(clf, features, output_path='public/rf_model.json'):
+    """Export trained Random Forest as JSON for browser inference."""
+    trees = []
+    for estimator in clf.estimators_:
+        tree = estimator.tree_
+        nodes = []
+        for i in range(tree.node_count):
+            nodes.append({
+                'f': int(tree.feature[i]),            # feature index (-2 = leaf)
+                't': round(float(tree.threshold[i]), 6),
+                'l': int(tree.children_left[i]),      # left child (-1 = none)
+                'r': int(tree.children_right[i]),     # right child
+                'v': [float(tree.value[i][0][0]), float(tree.value[i][0][1])]  # [class0, class1]
+            })
+        trees.append(nodes)
+
+    model = {
+        'n_estimators': len(clf.estimators_),
+        'features': features,
+        'trees': trees
+    }
+
+    import os
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    with open(output_path, 'w') as f:
+        json.dump(model, f, separators=(',', ':'))  # compact JSON
+
+    size_mb = os.path.getsize(output_path) / (1024 * 1024)
+    print(f"[DONE] Exported RF model -> {output_path} ({size_mb:.1f} MB, {len(trees)} trees)")
 
 
 def main():
@@ -265,7 +296,22 @@ def main():
 
     # ---- NORMAL MODE (Option A/B) ----
     print("--- TRAINING (AGGRESSIVE MODE) ---")
-    X_test_df, test_bot_ids = run_single(TRAIN_JSON_FILES, TRAIN_BOT_FILES, TEST_JSON_FILE, TEST_BOT_FILE, features)
+
+    # Train and export model for browser inference
+    df_raw_train, train_bot_ids = load_data(TRAIN_JSON_FILES, TRAIN_BOT_FILES)
+    X_train_df = extract_features(df_raw_train)
+    y_train = X_train_df['author_id'].apply(lambda x: 1 if x in train_bot_ids else 0)
+
+    clf = RandomForestClassifier(n_estimators=200, max_depth=15, class_weight='balanced', random_state=42)
+    clf.fit(X_train_df[features], y_train)
+    export_model_json(clf, features)
+
+    # Predict on test set
+    df_raw_test, test_bot_ids = load_data(TEST_JSON_FILE, TEST_BOT_FILE)
+    X_test_df = extract_features(df_raw_test)
+    probs = clf.predict_proba(X_test_df[features])[:, 1]
+    X_test_df['prob_bot'] = probs
+    X_test_df['pred_bot'] = (probs >= CONFIDENCE_THRESHOLD).astype(int)
 
     # SCORING
     if test_bot_ids:

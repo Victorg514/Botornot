@@ -5,6 +5,7 @@ import { StatsCard } from './components/StatsCard';
 import { UserDetailModal } from './components/UserDetailModal';
 import { detectBot, optimizeEnsembleWeights, EnsembleWeights } from './features';
 import { exportBotDetections, calculateStats, exportDetailedReport } from './exportResults';
+import { computeRFScores } from './rfModel';
 
 // Enhanced analysis using heuristic + optional python ensemble
 const runAnalysis = (
@@ -100,30 +101,22 @@ function App() {
     reader.readAsText(file);
   };
 
-  // Main scan: auto-fetch python scores, optimize if possible, then run
+  // Main scan: compute RF scores in-browser, optimize if possible, then run
   const runBatchAnalysis = async () => {
     if (!dataset) return;
     setIsProcessing(true);
     setOptimizeProgress('');
 
-    // Step 1: Auto-fetch python_scores.json if not already loaded
+    // Step 1: Compute RF scores in-browser if not already loaded
     let scores = pythonScores;
     if (scores.size === 0) {
       try {
-        setOptimizeProgress('Fetching python_scores.json...');
-        const res = await fetch('/python_scores.json');
-        if (res.ok) {
-          const json = await res.json();
-          const loaded = new Map<string, number>();
-          for (const [userId, prob] of Object.entries(json)) {
-            if (typeof prob === 'number') loaded.set(userId, prob);
-          }
-          scores = loaded;
-          setPythonScores(loaded);
-          setOptimizeProgress(`Loaded ${loaded.size} python scores`);
-        }
+        scores = await computeRFScores(dataset.posts, '/rf_model.json', (msg) => setOptimizeProgress(msg));
+        setPythonScores(scores);
+        setOptimizeProgress(`Computed RF scores for ${scores.size} users`);
+        await new Promise(r => setTimeout(r, 50)); // let UI update
       } catch {
-        // No python scores available — run heuristic only
+        // No RF model available — run heuristic only
       }
     }
 
